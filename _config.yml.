@@ -1,0 +1,9 @@
+title: Gestione Contratti Aziendali
+description: Sistema di monitoraggio scadenze e ISTAT
+theme: minima
+
+# Diciamo a GitHub di trattare la cartella 'contratti' come una collezione di dati
+collections:
+  contratti:
+    output: true
+    permalink: /contratti/:path/
