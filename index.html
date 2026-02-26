@@ -1,1 +1,35 @@
-
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Contratti ISTAT</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+</head>
+<body>
+    <h1>Business Contract Manager 📊</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Contratto</th>
+                <th>Cliente</th>
+                <th>Scadenza</th>
+                <th>Canone Attuale</th>
+                <th>ISTAT Attivo</th>
+                <th>Azione</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for contratto in site.contratti %}
+            <tr>
+                <td>{{ contratto.id }}</td>
+                <td><strong>{{ contratto.cliente_fornitore }}</strong></td>
+                <td>{{ contratto.scadenza_naturale }}</td>
+                <td>€ {{ contratto.importo_base }}</td>
+                <td>{{ contratto.adeguamento_istat.attivo | replace: "true", "✅" | replace: "false", "❌" }}</td>
+                <td><a href="{{ contratto.url }}">Dettagli</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
