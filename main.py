@@ -2,111 +2,132 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# Configurazione della pagina stile Enterprise
-st.set_page_config(page_title="Advanced Contract Management", layout="wide")
+# 1. Configurazione della pagina
+st.set_page_config(
+    page_title="Pro Contract Manager Elite",
+    page_icon="📑",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# --- CSS per un look professionale ---
+# 2. CSS CUSTOM PER L'EFFETTO WOW
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stAlert { border-radius: 10px; }
-    .stButton>button { background-color: #004aad; color: white; font-weight: bold; }
+    /* Sfondo e font generale */
+    .stApp {
+        background-color: #f0f2f6;
+    }
+    
+    /* Stilizzazione delle metriche (Card) */
+    [data-testid="stMetricValue"] {
+        font-size: 2rem;
+        color: #004aad;
+    }
+    [data-testid="stMetric"] {
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Sidebar elegante */
+    [data-testid="stSidebar"] {
+        background-color: #0e1117;
+        color: white;
+    }
+
+    /* Pulsante principale */
+    .stButton>button {
+        width: 100%;
+        border-radius: 25px;
+        height: 3em;
+        background: linear-gradient(90deg, #004aad 0%, #007bff 100%);
+        color: white;
+        font-weight: bold;
+        border: none;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 15px rgba(0,74,173,0.4);
+    }
+
+    /* Titoli */
+    h1 {
+        color: #1e293b;
+        font-weight: 800;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🏛️ Enterprise Contract Management")
-st.markdown("---")
-
-# --- SIDEBAR NAVIGAZIONE ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.header("Menu Gestionale")
-    menu = st.radio("Seleziona Area", ["📊 Dashboard & Scadenze", "✍️ Nuovo Contratto (Smart)"])
+    st.markdown("<h2 style='text-align: center; color: white;'>Elite CRM</h2>", unsafe_allow_html=True)
     st.markdown("---")
-    st.info("Versione 2.1 - Fix Sintassi Attivo")
+    menu = st.radio("NAVIGAZIONE", ["📊 Dashboard", "✍️ Nuovo Contratto"])
+    st.markdown("---")
+    st.caption("Utente: Amministratore")
+    st.caption("Stato Sistema: Online 🟢")
 
 # --- MODULO 1: DASHBOARD ---
-if menu == "📊 Dashboard & Scadenze":
-    st.subheader("Stato Generale Contratti")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Contratti Attivi", "5", "+1")
-    c2.metric("Scadenze < 30gg", "2", "⚠️")
-    c3.metric("Indice ISTAT Medio", "2.1%", "FOI")
+if menu == "📊 Dashboard":
+    st.title("Tableau de Bord 📈")
+    st.markdown("Monitoraggio in tempo reale dei contratti aziendali.")
+    
+    # Card con statistiche
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Contratti", "24", "+12%")
+    with col2:
+        st.metric("Scadenze", "3", "⚠️ Alert")
+    with col3:
+        st.metric("Fatturato", "€ 128k", "+5k ISTAT")
+    with col4:
+        st.metric("Rinnovi", "95%", "Ottimo")
 
+    st.markdown("---")
+    st.subheader("📋 Contratti Recenti")
+    
+    # Tabella con stile
     data = {
-        "Cliente": ["Rossi SRL", "Azienda Bianchi", "Verdi Manutenzioni"],
-        "Tipo": ["Servizi", "Manutenzione", "Manutenzione"],
-        "Scadenza": ["2024-12-31", "2025-06-30", "2024-03-15"],
-        "Stato": ["Attivo", "Attivo", "In Scadenza"]
+        "Cliente": ["Azienda Tech SPA", "Global Service SRL", "Studio Legale Rossi"],
+        "Settore": ["Manutenzione", "Servizi", "Consulenza"],
+        "Scadenza": ["2026-05-12", "2026-01-20", "2027-11-02"],
+        "Rating": ["⭐⭐⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"]
     }
     st.table(pd.DataFrame(data))
 
-# --- MODULO 2: SMART EDITOR ---
-elif menu == "✍️ Nuovo Contratto (Smart)":
-    st.subheader("Generatore Assistito di Contratti")
+# --- MODULO 2: CREAZIONE ---
+elif menu == "✍️ Nuovo Contratto":
+    st.title("Smart Contract Creator ✨")
+    st.info("Compila i campi per generare un documento legale pre-validato.")
     
-    st.markdown("#### Verifica Completezza Documento")
-    campi_compilati = 0
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        settore = st.selectbox("Ambito del Contratto", ["Manutenzione Impianti", "Prestazione di Servizi"])
-        cliente = st.text_input("Ragione Sociale Cliente")
-        if cliente: campi_compilati += 1
-        piva = st.text_input("Partita IVA / C.F.")
-        if piva: campi_compilati += 1
-    
-    with col_b:
-        canone = st.number_input("Canone Annuo (€)", min_value=0.0)
-        if canone > 0: campi_compilati += 1
-        inizio = st.date_input("Data Inizio", datetime.now())
-        fine = st.date_input("Data Fine")
-        if fine > inizio: campi_compilati += 1
+    with st.container():
+        c1, c2 = st.columns(2)
+        with c1:
+            settore = st.selectbox("Tipo Servizio", ["Manutenzione Impianti", "Prestazione di Servizi"])
+            cliente = st.text_input("Ragione Sociale")
+        with c2:
+            canone = st.number_input("Importo Annuo (€)", min_value=0.0)
+            fine = st.date_input("Scadenza")
 
-    progresso = campi_compilati / 4
-    st.progress(progresso)
-    
     st.markdown("---")
-    st.markdown("#### Opzioni Clausole Speciali")
-    c_istat = st.checkbox("Inserisci Adeguamento ISTAT (Indice FOI)")
-    c_rinnovo = st.checkbox("Inserisci Rinnovo Tacito (60 gg)")
+    
+    # Sezione clausole con icone
+    st.markdown("#### ⚙️ Configurazione Avanzata")
+    col_a, col_b = st.columns(2)
+    istat = col_a.toggle("Attiva Adeguamento ISTAT")
+    rinnovo = col_b.toggle("Attiva Rinnovo Automatico")
 
-    if st.button("Genera Bozza e Scarica"):
-        if progresso < 1.0:
-            st.error("Errore: Compila tutti i dati obbligatori prima di generare.")
+    if st.button("GENERA DOCUMENTO"):
+        if not cliente or canone == 0:
+            st.error("Dati mancanti! Inserisci cliente e importo.")
         else:
-            # COSTRUZIONE TESTO - Usiamo variabili separate per evitare errori di f-string
-            testo_header = f"# CONTRATTO DI {settore.upper()}\n"
-            testo_parti = f"**TRA:** Nostra Azienda (Fornitore) e **{cliente}** (Committente, P.IVA: {piva})\n\n"
+            testo = f"# CONTRATTO DI {settore.upper()}\n\nTra la scrivente e **{cliente}**.\nImporto: € {canone:,.2f}.\nScadenza: {fine}."
+            if istat: testo += "\n- Clausola ISTAT: ATTIVA"
+            if rinnovo: testo += "\n- Rinnovo Automatico: ATTIVO"
             
-            if settore == "Manutenzione Impianti":
-                corpo = (
-                    f"**Art. 1 (Oggetto):** Il Fornitore si impegna alla manutenzione ordinaria degli impianti del Committente.\n"
-                    f"**Art. 2 (Durata):** Il contratto decorre dal {inizio} al {fine}.\n"
-                    f"**Art. 3 (Corrispettivo):** Il canone annuo è fissato in € {canone:,.2f} + IVA.\n"
-                    f"**Art. 4 (Interventi):** Risposta entro 24 ore per guasti bloccanti.\n"
-                )
-            else:
-                corpo = (
-                    f"**Art. 1 (Oggetto):** Il Fornitore presterà i propri servizi professionali di {settore}.\n"
-                    f"**Art. 2 (Obbligazioni):** Svolgimento con diligenza secondo gli standard di legge.\n"
-                    f"**Art. 3 (Durata):** Dal {inizio} al {fine}.\n"
-                    f"**Art. 4 (Compensi):** Corrispettivo pattuito in € {canone:,.2f} + IVA.\n"
-                )
-
-            clausole = ""
-            if c_istat:
-                clausole += "\n**Art. 5 (ISTAT):** Aggiornamento annuale al 75% indice FOI.\n"
-            if c_rinnovo:
-                clausole += "\n**Art. 6 (Rinnovo):** Rinnovo tacito salvo disdetta 60gg prima.\n"
-
-            testo_finale = testo_header + testo_parti + corpo + clausole
-
-            st.markdown("### Anteprima Documento")
-            st.code(testo_finale, language="markdown")
-            
-            st.download_button(
-                label="📥 Scarica Contratto (.md)",
-                data=testo_finale,
-                file_name=f"Contratto_{cliente.replace(' ', '_')}.md",
-                mime="text/markdown"
-            )
+            st.balloons() # Effetto festa!
+            st.markdown("### 📄 Anteprima")
+            st.code(testo, language="markdown")
+            st.download_button("📥 SCARICA ORA", testo, file_name=f"{cliente}.md")
