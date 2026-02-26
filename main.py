@@ -22,7 +22,7 @@ with st.sidebar:
     st.header("Menu Gestionale")
     menu = st.radio("Seleziona Area", ["📊 Dashboard & Scadenze", "✍️ Nuovo Contratto (Smart)"])
     st.markdown("---")
-    st.info("Versione 2.0 - Modulo Legale Attivo")
+    st.info("Versione 2.1 - Fix Sintassi Attivo")
 
 # --- MODULO 1: DASHBOARD ---
 if menu == "📊 Dashboard & Scadenze":
@@ -32,7 +32,6 @@ if menu == "📊 Dashboard & Scadenze":
     c2.metric("Scadenze < 30gg", "2", "⚠️")
     c3.metric("Indice ISTAT Medio", "2.1%", "FOI")
 
-    # Dati di esempio per la tabella
     data = {
         "Cliente": ["Rossi SRL", "Azienda Bianchi", "Verdi Manutenzioni"],
         "Tipo": ["Servizi", "Manutenzione", "Manutenzione"],
@@ -41,11 +40,10 @@ if menu == "📊 Dashboard & Scadenze":
     }
     st.table(pd.DataFrame(data))
 
-# --- MODULO 2: SMART EDITOR (CON SCHELETRI LEGALI) ---
+# --- MODULO 2: SMART EDITOR ---
 elif menu == "✍️ Nuovo Contratto (Smart)":
     st.subheader("Generatore Assistito di Contratti")
     
-    # --- CHECK LEGALE (Progress Bar) ---
     st.markdown("#### Verifica Completezza Documento")
     campi_compilati = 0
     
@@ -64,24 +62,51 @@ elif menu == "✍️ Nuovo Contratto (Smart)":
         fine = st.date_input("Data Fine")
         if fine > inizio: campi_compilati += 1
 
-    # Calcolo percentuale progresso (4 campi base)
     progresso = campi_compilati / 4
     st.progress(progresso)
-    if progresso < 1.0:
-        st.warning("Completa tutti i dati sopra per abilitare la generazione professionale.")
-    else:
-        st.success("Check Legale Superato: Documento pronto per la generazione.")
-
+    
     st.markdown("---")
     st.markdown("#### Opzioni Clausole Speciali")
     c_istat = st.checkbox("Inserisci Adeguamento ISTAT (Indice FOI)")
     c_rinnovo = st.checkbox("Inserisci Rinnovo Tacito (60 gg)")
 
     if st.button("Genera Bozza e Scarica"):
-        # COSTRUZIONE DELLO SCHELETRO IN BASE AL SETTORE
-        if settore == "Manutenzione Impianti":
-            testo_contratto = f"""
-# CONTRATTO DI MANUTENZIONE TECNICA
-**TRA:** Nostra Azienda (Fornitore) e **{cliente}** (Committente, P.IVA: {piva})
+        if progresso < 1.0:
+            st.error("Errore: Compila tutti i dati obbligatori prima di generare.")
+        else:
+            # COSTRUZIONE TESTO - Usiamo variabili separate per evitare errori di f-string
+            testo_header = f"# CONTRATTO DI {settore.upper()}\n"
+            testo_parti = f"**TRA:** Nostra Azienda (Fornitore) e **{cliente}** (Committente, P.IVA: {piva})\n\n"
+            
+            if settore == "Manutenzione Impianti":
+                corpo = (
+                    f"**Art. 1 (Oggetto):** Il Fornitore si impegna alla manutenzione ordinaria degli impianti del Committente.\n"
+                    f"**Art. 2 (Durata):** Il contratto decorre dal {inizio} al {fine}.\n"
+                    f"**Art. 3 (Corrispettivo):** Il canone annuo è fissato in € {canone:,.2f} + IVA.\n"
+                    f"**Art. 4 (Interventi):** Risposta entro 24 ore per guasti bloccanti.\n"
+                )
+            else:
+                corpo = (
+                    f"**Art. 1 (Oggetto):** Il Fornitore presterà i propri servizi professionali di {settore}.\n"
+                    f"**Art. 2 (Obbligazioni):** Svolgimento con diligenza secondo gli standard di legge.\n"
+                    f"**Art. 3 (Durata):** Dal {inizio} al {fine}.\n"
+                    f"**Art. 4 (Compensi):** Corrispettivo pattuito in € {canone:,.2f} + IVA.\n"
+                )
 
-**Art. 1 (Oggetto):** Il Fornitore si impegna alla manutenzione ordinaria degli impianti del Committente per garantire efficienza e sicurezza.
+            clausole = ""
+            if c_istat:
+                clausole += "\n**Art. 5 (ISTAT):** Aggiornamento annuale al 75% indice FOI.\n"
+            if c_rinnovo:
+                clausole += "\n**Art. 6 (Rinnovo):** Rinnovo tacito salvo disdetta 60gg prima.\n"
+
+            testo_finale = testo_header + testo_parti + corpo + clausole
+
+            st.markdown("### Anteprima Documento")
+            st.code(testo_finale, language="markdown")
+            
+            st.download_button(
+                label="📥 Scarica Contratto (.md)",
+                data=testo_finale,
+                file_name=f"Contratto_{cliente.replace(' ', '_')}.md",
+                mime="text/markdown"
+            )
