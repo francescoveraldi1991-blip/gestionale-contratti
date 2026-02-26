@@ -2,69 +2,86 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# Configurazione stile "Professional"
+# Configurazione della pagina stile Enterprise
 st.set_page_config(page_title="Advanced Contract Management", layout="wide")
 
-# --- CSS Personalizzato per sembrare un software serio ---
+# --- CSS per un look professionale ---
 st.markdown("""
     <style>
-    .main { background-color: #f5f7f9; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #007bff; color: white; }
+    .main { background-color: #f8f9fa; }
+    .stAlert { border-radius: 10px; }
+    .stButton>button { background-color: #004aad; color: white; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("🏛️ Enterprise Contract Management")
 st.markdown("---")
 
-# Sidebar di Navigazione
+# --- SIDEBAR NAVIGAZIONE ---
 with st.sidebar:
-    st.image("https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d47353039331e16a02ad.svg", width=50)
-    menu = st.radio("Menu Gestionale", ["📊 Dashboard & Scadenze", "✍️ Nuovo Contratto (Smart)", "📈 Calcolo Adeguamento ISTAT"])
+    st.header("Menu Gestionale")
+    menu = st.radio("Seleziona Area", ["📊 Dashboard & Scadenze", "✍️ Nuovo Contratto (Smart)"])
+    st.markdown("---")
+    st.info("Versione 2.0 - Modulo Legale Attivo")
 
 # --- MODULO 1: DASHBOARD ---
 if menu == "📊 Dashboard & Scadenze":
-    st.subheader("Stato dei Contratti")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Contratti Attivi", "12", "+2 questo mese")
-    col2.metric("Scadenze 30gg", "3", "-1")
-    col3.metric("Volume Affari", "€ 45.200", "+5% ISTAT")
-    
-    # Esempio di tabella avanzata
+    st.subheader("Stato Generale Contratti")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Contratti Attivi", "5", "+1")
+    c2.metric("Scadenze < 30gg", "2", "⚠️")
+    c3.metric("Indice ISTAT Medio", "2.1%", "FOI")
+
+    # Dati di esempio per la tabella
     data = {
-        "Cliente": ["Azienda Alfa", "Beta Service", "Gamma SRL"],
-        "Settore": ["Manutenzione", "Servizi", "Manutenzione"],
-        "Fine Contratto": ["2024-12-01", "2025-06-15", "2024-03-20"],
-        "ISTAT": ["✅ Si", "❌ No", "✅ Si"],
-        "Stato": ["Attivo", "Attivo", "⚠️ In Scadenza"]
+        "Cliente": ["Rossi SRL", "Azienda Bianchi", "Verdi Manutenzioni"],
+        "Tipo": ["Servizi", "Manutenzione", "Manutenzione"],
+        "Scadenza": ["2024-12-31", "2025-06-30", "2024-03-15"],
+        "Stato": ["Attivo", "Attivo", "In Scadenza"]
     }
-    st.dataframe(pd.DataFrame(data), use_container_width=True)
+    st.table(pd.DataFrame(data))
 
-# --- MODULO 2: SMART EDITOR ---
+# --- MODULO 2: SMART EDITOR (CON SCHELETRI LEGALI) ---
 elif menu == "✍️ Nuovo Contratto (Smart)":
-    st.subheader("Generatore Legale Assistito")
+    st.subheader("Generatore Assistito di Contratti")
     
-    with st.expander("1. Anagrafica Parti"):
-        c1, c2 = st.columns(2)
-        nome = c1.text_input("Ragione Sociale / Nome")
-        piva = c2.text_input("P.IVA / CF")
+    # --- CHECK LEGALE (Progress Bar) ---
+    st.markdown("#### Verifica Completezza Documento")
+    campi_compilati = 0
     
-    with st.expander("2. Dettagli Servizio"):
-        settore = st.selectbox("Tipo di Contratto", ["Manutenzione Impianti", "Servizi Pulizia", "Consulenza IT"])
+    col_a, col_b = st.columns(2)
+    with col_a:
+        settore = st.selectbox("Ambito del Contratto", ["Manutenzione Impianti", "Prestazione di Servizi"])
+        cliente = st.text_input("Ragione Sociale Cliente")
+        if cliente: campi_compilati += 1
+        piva = st.text_input("Partita IVA / C.F.")
+        if piva: campi_compilati += 1
+    
+    with col_b:
         canone = st.number_input("Canone Annuo (€)", min_value=0.0)
-    
-    with st.expander("3. Clausole Legali"):
-        istat = st.checkbox("Inserisci clausola adeguamento ISTAT (Art. 32)")
-        rinnovo = st.checkbox("Inserisci clausola Rinnovo Tacito")
+        if canone > 0: campi_compilati += 1
+        inizio = st.date_input("Data Inizio", datetime.now())
+        fine = st.date_input("Data Fine")
+        if fine > inizio: campi_compilati += 1
 
-    if st.button("Genera Bozza Contratto"):
-        st.info("Bozza Generata con successo!")
-        testo_legale = f"""
-        **CONTRATTO DI {settore.upper()}**
-        
-        Tra **{nome}** (di seguito Committente) e **Nostra Azienda**...
-        Il canone pattuito è di € {canone}. 
-        { "L'importo sarà aggiornato annualmente secondo indici ISTAT." if istat else "" }
-        { "Il contratto si intende rinnovato tacitamente alla scadenza." if rinnovo else "" }
-        """
-        st.markdown(testo_legale)
-        st.download_button("Scarica Contratto (TXT)", testo_legale)
+    # Calcolo percentuale progresso (4 campi base)
+    progresso = campi_compilati / 4
+    st.progress(progresso)
+    if progresso < 1.0:
+        st.warning("Completa tutti i dati sopra per abilitare la generazione professionale.")
+    else:
+        st.success("Check Legale Superato: Documento pronto per la generazione.")
+
+    st.markdown("---")
+    st.markdown("#### Opzioni Clausole Speciali")
+    c_istat = st.checkbox("Inserisci Adeguamento ISTAT (Indice FOI)")
+    c_rinnovo = st.checkbox("Inserisci Rinnovo Tacito (60 gg)")
+
+    if st.button("Genera Bozza e Scarica"):
+        # COSTRUZIONE DELLO SCHELETRO IN BASE AL SETTORE
+        if settore == "Manutenzione Impianti":
+            testo_contratto = f"""
+# CONTRATTO DI MANUTENZIONE TECNICA
+**TRA:** Nostra Azienda (Fornitore) e **{cliente}** (Committente, P.IVA: {piva})
+
+**Art. 1 (Oggetto):** Il Fornitore si impegna alla manutenzione ordinaria degli impianti del Committente per garantire efficienza e sicurezza.
