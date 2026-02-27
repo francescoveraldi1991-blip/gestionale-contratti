@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 
 # 1. Configurazione della pagina
 st.set_page_config(
@@ -10,13 +10,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inizializziamo il database in memoria se non esiste (per rendere la dashboard dinamica)
+# Inizializziamo il database in memoria
 if 'db_contratti' not in st.session_state:
     st.session_state.db_contratti = pd.DataFrame(columns=[
         "Cliente", "Settore", "Scadenza", "Fatturato", "Stato"
     ])
 
-# 2. CSS CUSTOM (Invariato, con fix per testo nero)
+# 2. CSS CUSTOM (Invariato)
 st.markdown("""
     <style>
     .stApp { background-color: #f0f2f6; }
@@ -33,21 +33,38 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- FUNZIONE DI CONTROLLO SCADENZE ---
+def calcola_scadenze_critiche(df):
+    if df.empty:
+        return 0
+    oggi = date.today()
+    critiche = 0
+    for idx, row in df.iterrows():
+        scadenza = datetime.strptime(row['Scadenza'], '%Y-%m-%d').date()
+        # Se mancano meno di 30 giorni alla scadenza
+        giorni_rimanenti = (scadenza - oggi).days
+        if 0 <= giorni_rimanenti <= 30:
+            critiche += 1
+            df.at[idx, 'Stato'] = "⚠️ IN SCADENZA"
+        elif giorni_rimanenti < 0:
+            df.at[idx, 'Stato'] = "🚫 SCADUTO"
+    return critiche
+
 # --- SIDEBAR ---
 with st.sidebar:
     st.markdown("<h2 style='text-align: center;'>Elite CRM</h2>", unsafe_allow_html=True)
     st.markdown("---")
     menu = st.radio("NAVIGAZIONE", ["📊 Dashboard", "✍️ Nuovo Contratto", "📂 Carica PDF Esterno"])
     st.markdown("---")
-    st.caption("Utente: Amministratore")
-    st.caption("Stato Sistema: Online 🟢")
+    st.caption(f"Data Oggi: {date.today().strftime('%d/%m/%Y')}")
 
-# --- MODULO 1: DASHBOARD (Ora Dinamica) ---
+# --- MODULO 1: DASHBOARD ---
 if menu == "📊 Dashboard":
     st.title("Tableau de Bord 📈")
-    st.markdown("##### Monitoraggio in tempo reale dei contratti aziendali.")
     
-    # Calcolo metriche dinamiche
+    # Aggiorniamo gli stati e calcoliamo le criticità
+    n_critiche = calcola_scadenze_critiche(st.session_state.db_contratti)
+    
     totale_contratti = len(st.session_state.db_contratti)
     fatturato_totale = st.session_state.db_contratti["Fatturato"].sum()
     
@@ -55,7 +72,8 @@ if menu == "📊 Dashboard":
     with col1:
         st.metric("Contratti Totali", f"{totale_contratti}")
     with col2:
-        st.metric("Scadenze Critiche", "0", "⚠️ Alert")
+        # La scheda ora si aggiorna dinamicamente
+        st.metric("Scadenze Critiche", f"{n_critiche}", delta="Alert" if n_critiche > 0 else None, delta_color="inverse")
     with col3:
         st.metric("Fatturato Annuo", f"€ {fatturato_totale:,.2f}")
     with col4:
@@ -65,54 +83,40 @@ if menu == "📊 Dashboard":
     st.subheader("📋 Contratti in Archivio")
     
     if totale_contratti > 0:
+        # Mostriamo la tabella con gli stati aggiornati (⚠️ IN SCADENZA o 🚫 SCADUTO)
         st.dataframe(st.session_state.db_contratti, use_container_width=True)
     else:
-        st.info("L'archivio è vuoto. Carica un PDF o genera un nuovo contratto.")
+        st.info("L'archivio è vuoto. Carica un PDF per iniziare.")
 
 # --- MODULO 2: CREAZIONE (Invariato) ---
 elif menu == "✍️ Nuovo Contratto":
     st.title("Smart Contract Creator ✨")
-    # ... (Il codice precedente della creazione rimane qui, rimosso per brevità ma va mantenuto uguale)
-    st.warning("Usa questa sezione per generare testi. Per popolare la Dashboard, usa la sezione 'Carica PDF'.")
+    st.warning("Usa la sezione 'Carica PDF' per popolare la Dashboard.")
 
-# --- MODULO NUOVO: CARICAMENTO PDF ---
+# --- MODULO 3: CARICAMENTO PDF (Aggiornato per salvare la data corretta) ---
 elif menu == "📂 Carica PDF Esterno":
     st.title("Archiviazione Contratto PDF 📂")
-    st.markdown("##### Carica un file PDF e inserisci i dati per l'aggiornamento della Dashboard.")
     
-    with st.container():
-        # Uploader del file
-        file_pdf = st.file_uploader("Trascina qui il contratto PDF", type=["pdf"])
-        
-        st.markdown("---")
-        st.markdown("#### 📝 Inserimento Dati Tabella")
-        
-        c1, c2 = st.columns(2)
-        with c1:
-            nuovo_cliente = st.text_input("Ragione Sociale Cliente")
-            nuovo_settore = st.selectbox("Settore", ["Manutenzione", "Servizi", "Consulenza"])
-            nuova_scadenza = st.date_input("Data di Scadenza")
-        with c2:
-            nuovo_fatturato = st.number_input("Fatturato Annuo (€)", min_value=0.0, step=1000.0)
-            nuovo_stato = st.selectbox("Stato Iniziale", ["✅ Attivo", "⏳ In Attesa", "⚠️ In Scadenza"])
+    file_pdf = st.file_uploader("Trascina qui il contratto PDF", type=["pdf"])
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        nuovo_cliente = st.text_input("Ragione Sociale Cliente")
+        nuovo_settore = st.selectbox("Settore", ["Manutenzione", "Servizi", "Consulenza"])
+    with c2:
+        nuova_scadenza = st.date_input("Data di Scadenza")
+        nuovo_fatturato = st.number_input("Fatturato Annuo (€)", min_value=0.0)
 
     if st.button("🚀 SALVA E AGGIORNA GESTIONALE"):
-        if not file_pdf:
-            st.error("Devi caricare un file PDF per procedere.")
-        elif not nuovo_cliente or nuovo_fatturato == 0:
-            st.error("Inserisci il nome del cliente e il fatturato.")
+        if not file_pdf or not nuovo_cliente:
+            st.error("Carica il file e inserisci il nome cliente.")
         else:
-            # Creazione riga dati
             nuova_riga = {
                 "Cliente": nuovo_cliente,
                 "Settore": nuovo_settore,
                 "Scadenza": nuova_scadenza.strftime('%Y-%m-%d'),
                 "Fatturato": nuovo_fatturato,
-                "Stato": nuovo_stato
+                "Stato": "✅ Attivo" # Lo stato iniziale è attivo, verrà ricontrollato dalla Dashboard
             }
-            
-            # Aggiunta al database in sessione
             st.session_state.db_contratti = pd.concat([st.session_state.db_contratti, pd.DataFrame([nuova_riga])], ignore_index=True)
-            
-            st.balloons()
-            st.success(f"Contratto di {nuovo_cliente} archiviato con successo! Dashboard aggiornata.")
+            st.success("Contratto archiviato!")
