@@ -3,89 +3,45 @@ import streamlit as st
 def apply_custom_style():
     st.markdown("""
         <style>
-        /* Import font professionale */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
-        
-        /* Sfondo generale e font */
-        html, body, [class*="st-"] {
-            font-family: 'Inter', sans-serif;
-            color: #1a1a1a !important; 
+        /* Forza lo sfondo dell'intera pagina e dei contenitori */
+        .stApp, .main, .block-container {
+            background-color: #f8fafc !important;
         }
 
-        .stApp {
-            background: #f8fafc; 
+        /* TRUCCO PER LA TABELLA: Forza il contenitore a essere bianco */
+        [data-testid="stDataFrame"] {
+            background-color: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 15px !important;
         }
-        
-        /* --- SIDEBAR LUXURY --- */
+
+        /* Questo serve per le tabelle vecchio stile e box di testo */
+        table, thead, tbody, th, td, tr {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        /* --- SIDEBAR (Manteniamo Luxury) --- */
         [data-testid="stSidebar"] {
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
         }
-
-        [data-testid="stSidebar"] .stMarkdown p, 
-        [data-testid="stSidebar"] label, 
-        [data-testid="stSidebar"] span, 
-        [data-testid="stSidebar"] div,
-        [data-testid="stSidebar"] .stRadio p {
+        [data-testid="stSidebar"] * {
             color: #ffffff !important;
         }
-        
         .sidebar-title {
             font-family: 'Georgia', serif !important;
             color: #ffffff !important;
             text-align: center;
             font-size: 1.8rem !important;
             font-weight: bold;
-            margin-bottom: 0px;
             padding-top: 20px;
         }
 
-        /* --- CONTENUTI PRINCIPALI --- */
-        [data-testid="stMetric"] {
-            background: white !important;
-            border-radius: 20px !important;
-            padding: 25px !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
-        }
-        
-        .stStep, .stAlert, .stFileUpload, .stSelectbox, .stDateInput, .stNumberInput, .stTextInput, div[data-testid="stExpander"] {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-            border-radius: 12px !important;
-        }
-
-        /* --- TABELLA (DATAFRAME) ELITE STYLE --- */
-        /* Forza lo sfondo bianco e testo nero per l'intera tabella */
-        [data-testid="stDataFrame"] {
-            background-color: #ffffff !important;
-            border-radius: 15px !important;
-            padding: 10px !important;
-            border: 1px solid #e2e8f0 !important;
-        }
-
-        /* Colore del testo nelle celle e intestazioni */
-        [data-testid="stDataFrame"] div[data-testid="stTable"] td, 
-        [data-testid="stDataFrame"] div[data-testid="stTable"] th {
-            color: #000000 !important;
-            background-color: #ffffff !important;
-        }
-
-        /* Bottoni Luxury */
+        /* --- BOTTONI --- */
         .stButton>button {
-            width: 100%;
-            border-radius: 12px;
-            height: 3.5em;
-            background: #0f172a;
+            background: #0f172a !important;
             color: #ffffff !important;
-            font-weight: 700;
-            border: 1px solid #fbbf24;
-            transition: all 0.3s ease;
-        }
-        
-        .stButton>button:hover {
-            background: #fbbf24;
-            color: #0f172a !important;
-            box-shadow: 0 10px 20px rgba(251,191,36,0.3);
+            border: 1px solid #fbbf24 !important;
         }
         </style>
     """, unsafe_allow_html=True)
