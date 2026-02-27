@@ -9,16 +9,25 @@ def apply_custom_style():
         /* Sfondo generale e font */
         html, body, [class*="st-"] {
             font-family: 'Inter', sans-serif;
-            color: #1a1a1a !important; /* Testo nero ovunque */
+            color: #1a1a1a !important; 
         }
 
         .stApp {
-            background: #f8fafc; /* Sfondo chiaro e pulito */
+            background: #f8fafc; 
         }
         
-        /* Sidebar Luxury */
+        /* --- SIDEBAR LUXURY --- */
         [data-testid="stSidebar"] {
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+        }
+
+        /* Forza colore BIANCO per tutti i testi nella Sidebar */
+        [data-testid="stSidebar"] .stMarkdown p, 
+        [data-testid="stSidebar"] label, 
+        [data-testid="stSidebar"] span, 
+        [data-testid="stSidebar"] div,
+        [data-testid="stSidebar"] .stRadio p {
+            color: #ffffff !important;
         }
         
         /* Titolo Elite v3.0 in Georgia Bianco */
@@ -29,9 +38,10 @@ def apply_custom_style():
             font-size: 1.8rem !important;
             font-weight: bold;
             margin-bottom: 0px;
+            padding-top: 20px;
         }
 
-        /* Card Metriche Invariate (Glassmorphism chiaro) */
+        /* --- CONTENUTI PRINCIPALI --- */
         [data-testid="stMetric"] {
             background: white !important;
             border-radius: 20px !important;
@@ -40,19 +50,14 @@ def apply_custom_style():
             box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
         }
         
-        /* Riquadri, Expander e Form: Sfondo Bianco e Testo Nero */
+        /* Sfondi chiari per i riquadri nel corpo pagina */
         .stStep, .stAlert, .stFileUpload, .stSelectbox, .stDateInput, .stNumberInput, .stTextInput, div[data-testid="stExpander"] {
             background-color: #ffffff !important;
             color: #000000 !important;
             border-radius: 12px !important;
         }
 
-        /* Fix per i testi dentro gli expander e i box */
-        .stMarkdown p, .stMarkdown h3, label p {
-            color: #1a1a1a !important;
-        }
-
-        /* Bottoni */
+        /* Bottoni Luxury */
         .stButton>button {
             width: 100%;
             border-radius: 12px;
@@ -70,7 +75,6 @@ def apply_custom_style():
             box-shadow: 0 10px 20px rgba(251,191,36,0.3);
         }
 
-        /* Dataframe (Tabella) */
         [data-testid="stDataFrame"] {
             background: white !important;
             border-radius: 15px;
