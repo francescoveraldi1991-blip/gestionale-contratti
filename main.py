@@ -33,21 +33,21 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNZIONE DI CONTROLLO SCADENZE ---
+# --- FUNZIONE DI CONTROLLO SCADENZE (Invariata) ---
 def calcola_scadenze_critiche(df):
-    if df.empty:
-        return 0
+    if df.empty: return 0
     oggi = date.today()
     critiche = 0
     for idx, row in df.iterrows():
         scadenza = datetime.strptime(row['Scadenza'], '%Y-%m-%d').date()
-        # Se mancano meno di 30 giorni alla scadenza
         giorni_rimanenti = (scadenza - oggi).days
         if 0 <= giorni_rimanenti <= 30:
             critiche += 1
             df.at[idx, 'Stato'] = "⚠️ IN SCADENZA"
         elif giorni_rimanenti < 0:
             df.at[idx, 'Stato'] = "🚫 SCADUTO"
+        else:
+            df.at[idx, 'Stato'] = "✅ ATTIVO"
     return critiche
 
 # --- SIDEBAR ---
@@ -58,33 +58,35 @@ with st.sidebar:
     st.markdown("---")
     st.caption(f"Data Oggi: {date.today().strftime('%d/%m/%Y')}")
 
-# --- MODULO 1: DASHBOARD ---
+# --- MODULO 1: DASHBOARD (Con Funzione Elimina) ---
 if menu == "📊 Dashboard":
     st.title("Tableau de Bord 📈")
     
-    # Aggiorniamo gli stati e calcoliamo le criticità
     n_critiche = calcola_scadenze_critiche(st.session_state.db_contratti)
-    
     totale_contratti = len(st.session_state.db_contratti)
     fatturato_totale = st.session_state.db_contratti["Fatturato"].sum()
     
     col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Contratti Totali", f"{totale_contratti}")
-    with col2:
-        # La scheda ora si aggiorna dinamicamente
-        st.metric("Scadenze Critiche", f"{n_critiche}", delta="Alert" if n_critiche > 0 else None, delta_color="inverse")
-    with col3:
-        st.metric("Fatturato Annuo", f"€ {fatturato_totale:,.2f}")
-    with col4:
-        st.metric("Tasso Rinnovo", "100%", "Ottimo")
+    with col1: st.metric("Contratti Totali", f"{totale_contratti}")
+    with col2: st.metric("Scadenze Critiche", f"{n_critiche}", delta="Alert" if n_critiche > 0 else None, delta_color="inverse")
+    with col3: st.metric("Fatturato Annuo", f"€ {fatturato_totale:,.2f}")
+    with col4: st.metric("Tasso Rinnovo", "100%", "Ottimo")
 
     st.markdown("---")
     st.subheader("📋 Contratti in Archivio")
     
     if totale_contratti > 0:
-        # Mostriamo la tabella con gli stati aggiornati (⚠️ IN SCADENZA o 🚫 SCADUTO)
         st.dataframe(st.session_state.db_contratti, use_container_width=True)
+        
+        # --- SEZIONE ELIMINA CONTRATTO ---
+        st.markdown("---")
+        with st.expander("🗑️ AREA CANCELLAZIONE"):
+            st.warning("Attenzione: l'eliminazione è irreversibile.")
+            cliente_da_eliminare = st.selectbox("Seleziona il contratto da eliminare", st.session_state.db_contratti["Cliente"].unique())
+            if st.button("CONFERMA ELIMINAZIONE"):
+                st.session_state.db_contratti = st.session_state.db_contratti[st.session_state.db_contratti["Cliente"] != cliente_da_eliminare]
+                st.success(f"Contratto di {cliente_da_eliminare} rimosso correttamente!")
+                st.rerun() # Ricarica l'app per aggiornare i calcoli e la tabella
     else:
         st.info("L'archivio è vuoto. Carica un PDF per iniziare.")
 
@@ -93,12 +95,10 @@ elif menu == "✍️ Nuovo Contratto":
     st.title("Smart Contract Creator ✨")
     st.warning("Usa la sezione 'Carica PDF' per popolare la Dashboard.")
 
-# --- MODULO 3: CARICAMENTO PDF (Aggiornato per salvare la data corretta) ---
+# --- MODULO 3: CARICAMENTO PDF (Invariato) ---
 elif menu == "📂 Carica PDF Esterno":
     st.title("Archiviazione Contratto PDF 📂")
-    
     file_pdf = st.file_uploader("Trascina qui il contratto PDF", type=["pdf"])
-    
     c1, c2 = st.columns(2)
     with c1:
         nuovo_cliente = st.text_input("Ragione Sociale Cliente")
@@ -111,12 +111,7 @@ elif menu == "📂 Carica PDF Esterno":
         if not file_pdf or not nuovo_cliente:
             st.error("Carica il file e inserisci il nome cliente.")
         else:
-            nuova_riga = {
-                "Cliente": nuovo_cliente,
-                "Settore": nuovo_settore,
-                "Scadenza": nuova_scadenza.strftime('%Y-%m-%d'),
-                "Fatturato": nuovo_fatturato,
-                "Stato": "✅ Attivo" # Lo stato iniziale è attivo, verrà ricontrollato dalla Dashboard
-            }
+            nuova_riga = {"Cliente": nuovo_cliente, "Settore": nuovo_settore, "Scadenza": nuova_scadenza.strftime('%Y-%m-%d'), "Fatturato": nuovo_fatturato, "Stato": "✅ ATTIVO"}
             st.session_state.db_contratti = pd.concat([st.session_state.db_contratti, pd.DataFrame([nuova_riga])], ignore_index=True)
             st.success("Contratto archiviato!")
+            st.rerun()
