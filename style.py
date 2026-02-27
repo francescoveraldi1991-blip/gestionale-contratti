@@ -21,7 +21,6 @@ def apply_custom_style():
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
         }
 
-        /* Forza colore BIANCO per tutti i testi nella Sidebar */
         [data-testid="stSidebar"] .stMarkdown p, 
         [data-testid="stSidebar"] label, 
         [data-testid="stSidebar"] span, 
@@ -30,7 +29,6 @@ def apply_custom_style():
             color: #ffffff !important;
         }
         
-        /* Titolo Elite v3.0 in Georgia Bianco */
         .sidebar-title {
             font-family: 'Georgia', serif !important;
             color: #ffffff !important;
@@ -50,11 +48,26 @@ def apply_custom_style():
             box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
         }
         
-        /* Sfondi chiari per i riquadri nel corpo pagina */
         .stStep, .stAlert, .stFileUpload, .stSelectbox, .stDateInput, .stNumberInput, .stTextInput, div[data-testid="stExpander"] {
             background-color: #ffffff !important;
             color: #000000 !important;
             border-radius: 12px !important;
+        }
+
+        /* --- TABELLA (DATAFRAME) ELITE STYLE --- */
+        /* Forza lo sfondo bianco e testo nero per l'intera tabella */
+        [data-testid="stDataFrame"] {
+            background-color: #ffffff !important;
+            border-radius: 15px !important;
+            padding: 10px !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+
+        /* Colore del testo nelle celle e intestazioni */
+        [data-testid="stDataFrame"] div[data-testid="stTable"] td, 
+        [data-testid="stDataFrame"] div[data-testid="stTable"] th {
+            color: #000000 !important;
+            background-color: #ffffff !important;
         }
 
         /* Bottoni Luxury */
@@ -73,11 +86,6 @@ def apply_custom_style():
             background: #fbbf24;
             color: #0f172a !important;
             box-shadow: 0 10px 20px rgba(251,191,36,0.3);
-        }
-
-        [data-testid="stDataFrame"] {
-            background: white !important;
-            border-radius: 15px;
         }
         </style>
     """, unsafe_allow_html=True)
