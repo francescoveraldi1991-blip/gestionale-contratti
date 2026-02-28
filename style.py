@@ -13,38 +13,24 @@ def apply_custom_style():
             background-color: #f8fafc !important;
         }
         
-        /* 2. CENTRATURA E STILE SCHEDE METRICHE (DASHBOARD) */
+        /* 2. SCHEDE METRICHE CENTRATE */
         [data-testid="stMetric"] {
             background: #ffffff !important;
             border-radius: 15px !important;
             border: 1px solid #d1d5db !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
-            text-align: center !important; /* Centra il contenitore */
+            text-align: center !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
         }
 
-        /* Forza la centratura dell'etichetta (es: "Volume d'Affari") */
-        [data-testid="stMetricLabel"] {
-            width: 100% !important;
-            display: flex !important;
-            justify-content: center !important;
-        }
-        
         [data-testid="stMetricLabel"] p {
             color: #000000 !important;
             font-weight: 600 !important;
             font-size: 1.1rem !important;
             text-align: center !important;
-        }
-
-        /* Forza la centratura del numero/valore */
-        [data-testid="stMetricValue"] {
-            width: 100% !important;
-            display: flex !important;
-            justify-content: center !important;
         }
 
         [data-testid="stMetricValue"] div {
@@ -53,7 +39,30 @@ def apply_custom_style():
             text-align: center !important;
         }
 
-        /* 3. SIDEBAR (MANTENIAMO BIANCO SU BLU MA CON FONT GEORGIA) */
+        /* 3. INPUT AREA (ARCHIVIO DOCUMENTALE) - SFONDO BIANCO E BORDO ORO */
+        /* Colpisce campi di testo, numeri, date e selectbox */
+        .stTextInput input, .stNumberInput input, .stDateInput input, .stSelectbox div[data-baseweb="select"] {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #fbbf24 !important; /* Bordo Oro */
+            border-radius: 10px !important;
+        }
+
+        /* Caricamento File (File Uploader) */
+        [data-testid="stFileUploader"] {
+            background-color: #ffffff !important;
+            border: 2px dashed #fbbf24 !important; /* Bordo tratteggiato Oro */
+            border-radius: 15px !important;
+            padding: 20px !important;
+        }
+        
+        /* Forza il testo nero dentro i box di input */
+        input {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+
+        /* 4. SIDEBAR LUXURY */
         [data-testid="stSidebar"] {
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
         }
@@ -71,20 +80,20 @@ def apply_custom_style():
             padding-top: 20px;
         }
 
-        /* 4. TABELLA (DATABASE CONTRATTI) */
+        /* 5. TABELLA (DATABASE CONTRATTI) */
         [data-testid="stDataFrame"], table, thead, tbody, th, td {
             background-color: #ffffff !important;
             color: #000000 !important;
-            font-family: 'Georgia', serif !important;
         }
 
-        /* 5. BOTTONI */
+        /* 6. BOTTONI */
         .stButton>button {
             background: #0f172a !important;
             color: #ffffff !important;
             border: 1px solid #fbbf24 !important;
             font-family: 'Georgia', serif !important;
             font-weight: 700;
+            border-radius: 12px;
         }
         
         .stButton>button:hover {
