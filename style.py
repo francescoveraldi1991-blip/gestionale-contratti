@@ -32,7 +32,7 @@ def apply_custom_style():
 
         /* 4. CARICAMENTO FILE (FILE UPLOADER) - LUXURY DARK VERSION */
         [data-testid="stFileUploader"] {
-            background-color: #0f172a !important; /* Sfondo Blu Notte */
+            background-color: #ffffff !important; /* Sfondo Blu Notte */
             border: 2px dashed #fbbf24 !important; /* Bordo Oro */
             border-radius: 15px !important;
             padding: 30px !important;
@@ -52,7 +52,7 @@ def apply_custom_style():
 
         /* Bottone interno "Browse files" */
         [data-testid="stFileUploader"] button {
-            background-color: #fbbf24 !important;
+            background-color: #ffffff !important;
             color: #0f172a !important;
             border-radius: 8px !important;
             font-weight: bold !important;
@@ -75,7 +75,7 @@ def apply_custom_style():
 
         /* 6. BOTTONI AZIONE */
         .stButton>button {
-            background: #0f172a !important;
+            background: #ffffff !important;
             color: #ffffff !important;
             border: 1px solid #fbbf24 !important;
             font-family: 'Georgia', serif !important;
@@ -83,7 +83,7 @@ def apply_custom_style():
             border-radius: 12px;
         }
         .stButton>button:hover {
-            background: #fbbf24 !important;
+            background: #ffffff !important;
             color: #0f172a !important;
         }
         </style>
