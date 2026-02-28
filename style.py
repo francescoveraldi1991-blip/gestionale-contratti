@@ -3,8 +3,8 @@ import streamlit as st
 def apply_custom_style():
     st.markdown("""
         <style>
-        /* 1. IMPOSTAZIONE FONT GEORGIA UNIVERSALE */
-        html, body, [class*="st-"], .main, .stMarkdown, p, h1, h2, h3, h4, h5, h6, label, span, div {
+        /* 1. RESET TOTALE: FONT GEORGIA E NERO UNIVERSALE */
+        html, body, [class*="st-"], .main, .stMarkdown, p, h1, h2, h3, h4, h5, h6, label, span, div, small {
             font-family: 'Georgia', serif !important;
             color: #000000 !important; 
         }
@@ -20,58 +20,64 @@ def apply_custom_style():
             border: 1px solid #d1d5db !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
             text-align: center !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
+        }
+        [data-testid="stMetricLabel"] p { color: #000000 !important; font-weight: 600 !important; }
+        [data-testid="stMetricValue"] div { color: #004aad !important; font-weight: 800 !important; }
+
+        /* 3. FIX RADICALE PER INPUT E RETTANGOLI (ARCHIVIO) */
+        /* Sfondo bianco per tutti i contenitori di input */
+        div[data-baseweb="input"], div[data-baseweb="select"], div[data-baseweb="popover"] {
+            background-color: #ffffff !important;
+            border-radius: 10px !important;
         }
 
-        [data-testid="stMetricLabel"] p {
-            color: #000000 !important;
-            font-weight: 600 !important;
-            font-size: 1.1rem !important;
-            text-align: center !important;
-        }
-
-        [data-testid="stMetricValue"] div {
-            color: #004aad !important; 
-            font-weight: 800 !important;
-            text-align: center !important;
-        }
-
-        /* 3. INPUT AREA (ARCHIVIO DOCUMENTALE) - SFONDO BIANCO E BORDO ORO */
-        /* Colpisce campi di testo, numeri, date e selectbox */
-        .stTextInput input, .stNumberInput input, .stDateInput input, .stSelectbox div[data-baseweb="select"] {
+        /* Rettangoli di inserimento testo, numeri e date */
+        .stTextInput input, .stNumberInput input, .stDateInput input {
             background-color: #ffffff !important;
             color: #000000 !important;
             border: 2px solid #fbbf24 !important; /* Bordo Oro */
             border-radius: 10px !important;
+            height: 45px !important;
         }
 
-        /* Caricamento File (File Uploader) */
+        /* Selettore a tendina (Selectbox) */
+        div[data-baseweb="select"] > div {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: 2px solid #fbbf24 !important;
+            border-radius: 10px !important;
+        }
+
+        /* 4. CARICAMENTO FILE (FILE UPLOADER) - ELIMINA IL NERO INTERNO */
         [data-testid="stFileUploader"] {
             background-color: #ffffff !important;
-            border: 2px dashed #fbbf24 !important; /* Bordo tratteggiato Oro */
+            border: 2px dashed #fbbf24 !important;
             border-radius: 15px !important;
-            padding: 20px !important;
+            padding: 30px !important;
+            color: #000000 !important;
         }
         
-        /* Forza il testo nero dentro i box di input */
-        input {
-            color: #000000 !important;
-            -webkit-text-fill-color: #000000 !important;
+        /* Forza il colore del tasto "Browse files" all'interno dell'uploader */
+        [data-testid="stFileUploader"] button {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+            border: 1px solid #fbbf24 !important;
+            border-radius: 8px !important;
         }
 
-        /* 4. SIDEBAR LUXURY */
+        /* Testo "Drag and drop file here" */
+        [data-testid="stFileUploader"] section {
+            color: #000000 !important;
+        }
+
+        /* 5. SIDEBAR LUXURY (Invariata) */
         [data-testid="stSidebar"] {
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
         }
-        
         [data-testid="stSidebar"] * {
             color: #ffffff !important;
             font-family: 'Georgia', serif !important;
         }
-        
         .sidebar-title {
             color: #ffffff !important;
             text-align: center;
@@ -80,13 +86,7 @@ def apply_custom_style():
             padding-top: 20px;
         }
 
-        /* 5. TABELLA (DATABASE CONTRATTI) */
-        [data-testid="stDataFrame"], table, thead, tbody, th, td {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }
-
-        /* 6. BOTTONI */
+        /* 6. BOTTONI AZIONE */
         .stButton>button {
             background: #0f172a !important;
             color: #ffffff !important;
@@ -94,8 +94,8 @@ def apply_custom_style():
             font-family: 'Georgia', serif !important;
             font-weight: 700;
             border-radius: 12px;
+            text-transform: uppercase;
         }
-        
         .stButton>button:hover {
             background: #fbbf24 !important;
             color: #0f172a !important;
