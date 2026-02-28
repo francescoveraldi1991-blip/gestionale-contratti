@@ -71,13 +71,13 @@ def apply_custom_style():
 
         /* 6. BOTTONI AZIONE */
         .stButton>button {
-            background: #0f172a !important;
+            background: #ffffff !important;
             color: #ffffff !important;
             border: 1px solid #fbbf24 !important;
             font-family: 'Georgia', serif !important;
             font-weight: 700;
             border-radius: 12px;
         }
-        .stButton>button:hover { background: #fbbf24 !important; color: #0f172a !important; }
+        .stButton>button:hover { background: #ffffff !important; color: #0f172a !important; }
         </style>
     """, unsafe_allow_html=True)
