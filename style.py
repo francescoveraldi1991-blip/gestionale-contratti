@@ -10,7 +10,7 @@ def apply_custom_style():
         }
 
         .stApp {
-            background-color: #f8fafc !important;
+            background-color: #ffffff !important;
         }
         
         /* 2. SCHEDE METRICHE CENTRATE */
