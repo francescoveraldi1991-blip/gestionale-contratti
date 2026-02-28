@@ -47,7 +47,7 @@ def apply_custom_style():
 
         /* 4. CARICAMENTO FILE (MANTENIAMO LUXURY DARK COME RICHIESTO PRIMA) */
         [data-testid="stFileUploader"] {
-            background-color: #0f172a !important;
+            background-color: #ffffff !important;
             border: 2px dashed #fbbf24 !important;
             border-radius: 15px !important;
             padding: 30px !important;
