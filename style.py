@@ -57,7 +57,7 @@ def apply_custom_style():
             color: #ffffff !important;
         }
         [data-testid="stFileUploader"] button {
-            background-color: #fbbf24 !important;
+            background-color: #ffffff  !important;
             color: #0f172a !important;
             border-radius: 8px !important;
         }
