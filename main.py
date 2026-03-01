@@ -24,10 +24,13 @@ if not os.path.exists(UPLOAD_DIR):
 
 # 2. INIZIALIZZAZIONE DATABASE
 if 'db_contratti' not in st.session_state:
-    # Aggiunta colonna 'File_Path' per il recupero cloud
     st.session_state.db_contratti = pd.DataFrame(columns=["Cliente", "Settore", "Scadenza", "Fatturato", "Stato", "File_Path"])
 
-# 3. FUNZIONE DI CALCOLO (Invariata)
+# --- FIX PER ERRORE KEYERROR (Assicura che la colonna esista sempre) ---
+if "File_Path" not in st.session_state.db_contratti.columns:
+    st.session_state.db_contratti["File_Path"] = "Nessun File"
+
+# 3. FUNZIONE DI CALCOLO METRICHE (Invariata)
 def calcola_metriche_e_aggiorna_stato(df):
     if df.empty: return 0, 0, 100
     oggi = date.today()
@@ -55,12 +58,13 @@ with st.sidebar:
     menu = st.radio("DASHBOARD NAVIGATOR", ["📊 Visione Globale", "✍️ Editor Contratti", "📂 Archivio Documentale", "🧾 Fatturazione"])
     st.caption(f"Status: Premium License 💠")
 
-# --- NAVIGAZIONE ---
+# --- NAVIGAZIONE PRINCIPALE ---
 
 if menu == "📊 Visione Globale":
     st.title("EXECUTIVE DASHBOARD")
     n_alerts, tot_fatturato, health = calcola_metriche_e_aggiorna_stato(st.session_state.db_contratti)
     
+    # 4 SCHEDE METRICHE
     col1, col2, col3, col4 = st.columns(4)
     with col1: st.metric("Contratti In Essere", f"{len(st.session_state.db_contratti)}")
     with col2: st.metric("Critical Alerts", f"{n_alerts}")
@@ -69,8 +73,9 @@ if menu == "📊 Visione Globale":
 
     st.markdown("---")
     
-    # Notifiche Email (Invariate)
+    # NOTIFICHE EMAIL
     if n_alerts > 0:
+        st.warning(f"Attenzione: Ci sono {n_alerts} contratti critici.")
         email_target = st.text_input("Email per il report:", "tua_email@esempio.it")
         if st.button("📧 INVIA NOTIFICHE EMAIL"):
             critici = st.session_state.db_contratti[st.session_state.db_contratti['Stato'].str.contains("⚠️|🚫")]
@@ -78,27 +83,32 @@ if menu == "📊 Visione Globale":
                 send_expiry_email(email_target, row['Cliente'], row['Scadenza'])
             st.success("Notifiche inviate!")
 
+    # TABELLA DATABASE
     st.subheader("Database Contratti & Cloud Storage")
     if not st.session_state.db_contratti.empty:
-        # Visualizzazione tabella (senza mostrare il path tecnico del file)
-        st.dataframe(st.session_state.db_contratti.drop(columns=['File_Path']), use_container_width=True)
+        # Mostriamo la tabella nascondendo la colonna tecnica se presente
+        cols_to_show = [c for c in st.session_state.db_contratti.columns if c != "File_Path"]
+        st.dataframe(st.session_state.db_contratti[cols_to_show], use_container_width=True)
         
-        # --- DOWNLOAD CLOUD DEI PDF ---
+        # DOWNLOAD PDF
         st.markdown("##### 📥 Recupero File dal Cloud")
         scelta_download = st.selectbox("Seleziona Contratto da scaricare:", st.session_state.db_contratti["Cliente"].unique())
         row_file = st.session_state.db_contratti[st.session_state.db_contratti["Cliente"] == scelta_download].iloc[0]
         
-        if row_file["File_Path"] != "Nessun File":
+        if row_file["File_Path"] != "Nessun File" and os.path.exists(row_file["File_Path"]):
             with open(row_file["File_Path"], "rb") as f:
                 st.download_button(label=f"Scarica PDF di {scelta_download}", data=f, file_name=f"Contratto_{scelta_download}.pdf", mime="application/pdf")
         else:
-            st.warning("Nessun file PDF associato a questo record.")
+            st.info("Nessun file fisico trovato per questo record.")
 
+        # AZIONI RAPIDE (ELIMINAZIONE)
         with st.expander("⚙️ Azioni Rapide Database"):
             cliente_sel = st.selectbox("Cliente da eliminare:", st.session_state.db_contratti["Cliente"].unique())
             if st.button("🗑️ ELIMINA"):
                 st.session_state.db_contratti = st.session_state.db_contratti[st.session_state.db_contratti["Cliente"] != cliente_sel]
                 st.rerun()
+    else:
+        st.info("Nessun contratto presente.")
 
 elif menu == "✍️ Editor Contratti":
     render_smart_editor()
@@ -118,8 +128,6 @@ elif menu == "📂 Archivio Documentale":
     if st.button("Archivia e Salva nel Cloud"):
         if nuovo_cliente and nuova_scadenza:
             path_salvataggio = "Nessun File"
-            
-            # --- LOGICA SALVATAGGIO FISICO FILE ---
             if file_pdf is not None:
                 nome_file = f"{nuovo_cliente}_{date.today().strftime('%Y%m%d')}.pdf"
                 path_salvataggio = os.path.join(UPLOAD_DIR, nome_file)
@@ -130,13 +138,12 @@ elif menu == "📂 Archivio Documentale":
                 "Cliente": nuovo_cliente, "Settore": nuovo_settore, 
                 "Scadenza": nuova_scadenza.strftime('%Y-%m-%d'), 
                 "Fatturato": nuovo_fatturato, "Stato": "✅ ATTIVO",
-                "File_Path": path_salvataggio # Salviamo il percorso del file
+                "File_Path": path_salvataggio
             }
             st.session_state.db_contratti = pd.concat([st.session_state.db_contratti, pd.DataFrame([nuova_riga])], ignore_index=True)
-            st.success("Asset e File salvati nel Cloud locale!")
+            st.success("Asset salvato correttamente!")
             st.balloons()
-        else:
-            st.error("Inserisci i dati obbligatori.")
+            st.rerun()
 
 elif menu == "🧾 Fatturazione":
     render_billing_assistant()
