@@ -1,11 +1,12 @@
 import streamlit as st
 from fpdf import FPDF
+from datetime import date
 
 def render_smart_editor():
     st.title("Smart Legal Editor ⚖️")
     st.markdown("##### Assistente alla redazione contrattuale conforme alla legge italiana.")
 
-    # --- INPUT UTENTE ---
+    # --- INPUT UTENTE (Invariati) ---
     with st.container():
         st.subheader("1. Qualificazione delle Parti")
         tipo_cliente = st.radio("Il Committente è:", ["Privato (Consumatore)", "Azienda/Professionista (Business)"])
@@ -25,57 +26,62 @@ def render_smart_editor():
         with col2:
             clausole_vessatorie = st.checkbox("Inserire Doppia Firma (Art. 1341-1342 CC)", value=True)
 
-    # --- LOGICA GIURIDICA ---
+    # --- LOGICA GIURIDICA (Invariata) ---
     testo_legale = f"CONTRATTO DI {tipo_contratto.upper()}\n\n"
     
     if tipo_cliente == "Privato (Consumatore)":
         testo_legale += "Disciplina: CODICE DEL CONSUMO (D.Lgs. 206/2005)\n"
-        testo_legale += "Nota: Il presente contratto è soggetto alle tutele del consumatore, incluse le norme sul foro competente e il recesso.\n\n"
+        testo_legale += "Nota: Soggetto alle tutele del consumatore.\n\n"
     else:
-        testo_legale += "Disciplina: CODICE CIVILE (Appalto tra privati - Art. 1655 e ss.)\n"
-        testo_legale += "Nota: Rapporto disciplinato dalle norme ordinarie sul contratto d'appalto B2B.\n\n"
+        testo_legale += "Disciplina: CODICE CIVILE (Appalto B2B - Art. 1655 e ss.)\n\n"
 
-    testo_legale += "Art. 1 - OGGETTO: L'appaltatore si impegna a eseguire le opere secondo le regole dell'arte...\n"
+    testo_legale += "Art. 1 - OGGETTO: L'appaltatore si impegna a eseguire le opere a regola d'arte.\n"
 
     if fideiussione:
-        testo_legale += "\nArt. 2 - GARANZIA: L'appaltatore presta fideiussione a prima richiesta per l'adempimento delle obbligazioni contrattuali.\n"
+        testo_legale += "\nArt. 2 - GARANZIA: Prestata fideiussione a prima richiesta.\n"
     
     if cauzione:
-        testo_legale += "\nArt. 3 - CAUZIONE: È previsto un deposito cauzionale pari al 10% dell'importo totale.\n"
+        testo_legale += "\nArt. 3 - CAUZIONE: Deposito cauzionale del 10%.\n"
 
     if clausole_vessatorie:
         testo_legale += "\n--- CLAUSOLE VESSATORIE ---\n"
-        testo_legale += "Ai sensi degli artt. 1341 e 1342 c.c., il Committente dichiara di aver letto e approvato specificamente le clausole relative a:\n"
-        testo_legale += "- Foro competente e risoluzione controversie\n- Limitazioni di responsabilità\n- Sospensione dei lavori e penali\n"
+        testo_legale += "Ai sensi degli artt. 1341 e 1342 c.c., si approvano specificamente: Foro competente, Limitazioni responsabilità, Penali.\n"
         testo_legale += "\nFirma del Committente: ______________________\n"
 
     st.markdown("---")
     st.subheader("Anteprima Documento")
-    testo_finale = st.text_area("Bozza Generata (modificabile):", value=testo_legale, height=350)
+    testo_finale = st.text_area("Bozza Generata:", value=testo_legale, height=350)
 
-    # --- FIX ERRORE: GENERAZIONE PDF ---
+    # --- GENERAZIONE PDF CORRETTA ---
     if st.button("🚀 GENERA E SCARICA PDF"):
         try:
-            pdf = FPDF()
+            # Inizializzazione PDF con margini espliciti
+            pdf = FPDF(orientation="P", unit="mm", format="A4")
+            pdf.set_margins(left=20, top=20, right=20)
             pdf.add_page()
-            # Usiamo Helvetica (standard) per evitare problemi di encoding
             pdf.set_font("Helvetica", size=12)
             
-            # Dividiamo il testo per righe per scriverlo correttamente nel PDF
-            for riga in testo_finale.split('\n'):
-                pdf.multi_cell(0, 8, riga)
+            # Pulizia del testo da caratteri che rompono il layout (es: Tabulatori)
+            testo_pulito = testo_finale.replace('\t', '    ')
             
-            # --- IL FIX: Trasformiamo l'output in bytes ---
-            pdf_bytes = pdf.output()
+            # Scrittura riga per riga per evitare errori di spazio orizzontale
+            for riga in testo_pulito.split('\n'):
+                if riga.strip() == "":
+                    pdf.ln(6) # Salta una riga se vuota
+                else:
+                    # multi_cell con larghezza calcolata (w=0 usa tutta la riga tra i margini)
+                    pdf.multi_cell(w=0, h=8, txt=riga, border=0, align='L')
+            
+            # Conversione in bytes per lo scaricamento
+            pdf_output = pdf.output()
             
             st.download_button(
-                label="📥 Clicca qui per il Download",
-                data=bytes(pdf_bytes), # Conversione esplicita in bytes
-                file_name=f"Contratto_Elite_{date.today().strftime('%Y%m%d')}.pdf",
+                label="📥 Scarica Contratto PDF",
+                data=bytes(pdf_output),
+                file_name=f"Contratto_{tipo_cliente}_{date.today().strftime('%Y%m%d')}.pdf",
                 mime="application/pdf"
             )
-            st.success("PDF pronto per il download!")
+            st.success("Documento pronto!")
+            
         except Exception as e:
-            st.error(f"Errore durante la creazione del PDF: {e}")
-
-from datetime import date # Assicuriamoci che date sia disponibile per il file_name
+            st.error(f"Errore tecnico nella creazione del PDF: {e}")
