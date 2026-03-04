@@ -46,7 +46,7 @@ def render_smart_editor():
             with st.spinner("L'IA sta elaborando il testo legale... attendere."):
                 try:
                     # Configurazione modello
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-pro')
                     
                     # Prompt tecnico per diritto italiano
                     prompt = f"""
