@@ -5,12 +5,12 @@ import google.generativeai as genai
 
 # Configura l'IA (Sostituisci con la tua chiave o usa i Secrets di Streamlit)
 def init_ai():
-    api_key = st.sidebar.text_input("Inserisci Gemini API Key 🔑", type="password")
+    # Sostituisci 'LA_TUA_CHIAVE_QUI' con la tua vera chiave API tra virgolette
+    api_key = "AIzaSyAW4juIbxT48hmy7gf3Lr9M3CyTLNWcF_g" 
     if api_key:
         genai.configure(api_key=api_key)
         return True
     return False
-
 def render_smart_editor():
     st.title("AI Legal Drafter 🤖⚖️")
     st.markdown("##### Scrivi i dettagli e lascia che l'intelligenza artificiale rediga il contratto per te.")
