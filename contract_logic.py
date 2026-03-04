@@ -1,112 +1,95 @@
 import streamlit as st
 from fpdf import FPDF
 from datetime import date
+import google.generativeai as genai
+
+# Configura l'IA (Sostituisci con la tua chiave o usa i Secrets di Streamlit)
+def init_ai():
+    api_key = st.sidebar.text_input("Inserisci Gemini API Key 🔑", type="password")
+    if api_key:
+        genai.configure(api_key=api_key)
+        return True
+    return False
 
 def render_smart_editor():
-    # TITOLO DELLA PAGINA NELL'APP
-    st.title("Smart Legal Editor ⚖️")
-    st.markdown("##### Assistente alla redazione contrattuale conforme alla legge italiana.")
+    st.title("AI Legal Drafter 🤖⚖️")
+    st.markdown("##### Scrivi i dettagli e lascia che l'intelligenza artificiale rediga il contratto per te.")
 
-    # --- 1. SEZIONE INPUT UTENTE (NON MODIFICATA) ---
+    ai_ready = init_ai()
+
+    if not ai_ready:
+        st.warning("👈 Per favore, inserisci la tua API Key nella barra laterale per attivare l'Intelligenza Artificiale.")
+        return
+
+    # --- INPUT PER L'IA ---
     with st.container():
-        st.subheader("1. Qualificazione delle Parti")
-        tipo_cliente = st.radio("Il Committente è:", ["Privato (Consumatore)", "Azienda/Professionista (Business)"])
+        st.subheader("Istruzioni per l'IA")
+        descrizione = st.text_area(
+            "Descrivi l'accordo (es: Contratto di fornitura software tra Azienda X e Y, durata 2 anni, pagamento trimestrale):",
+            placeholder="Specifica le parti, l'oggetto, il prezzo e eventuali clausole particolari...",
+            height=150
+        )
         
-        st.subheader("2. Oggetto del Contratto")
-        tipo_contratto = st.selectbox("Seleziona disciplina:", [
-            "Appalto d'opera/servizi", 
-            "Contratto di Manutenzione", 
-            "Fornitura con posa in opera"
-        ])
-        
-        st.subheader("3. Garanzie e Tutela")
         col1, col2 = st.columns(2)
         with col1:
-            fideiussione = st.checkbox("Prevedere Fideiussione Bancaria/Assicurativa")
-            cauzione = st.checkbox("Prevedere Deposito Cauzionale")
+            stile = st.selectbox("Tono del contratto:", ["Formale/Standard", "Protettivo per l'Appaltatore", "Protettivo per il Committente"])
         with col2:
-            clausole_vessatorie = st.checkbox("Inserire Doppia Firma (Art. 1341-1342 CC)", value=True)
+            include_vessatorie = st.checkbox("Includi doppia firma (Art. 1341-1342 CC)", value=True)
 
-    # --- 2. LOGICA GIURIDICA E COSTRUZIONE TESTO (NON MODIFICATA) ---
-    testo_legale = f"CONTRATTO DI {tipo_contratto.upper()}\n\n"
-    testo_legale += f"DATA: {date.today().strftime('%d/%m/%Y')}\n\n"
-    
-    if tipo_cliente == "Privato (Consumatore)":
-        testo_legale += "DISCIPLINA APPLICABILE: CODICE DEL CONSUMO (D.Lgs. 206/2005)\n"
-        testo_legale += "Nota: Il presente rapporto è soggetto alle tutele inderogabili a favore del consumatore.\n\n"
-    else:
-        testo_legale += "DISCIPLINA APPLICABILE: CODICE CIVILE (Art. 1655 e ss.)\n"
-        testo_legale += "Nota: Rapporto disciplinato dalle norme ordinarie sul contratto d'appalto tra professionisti.\n\n"
+    if st.button("🪄 GENERA BOZZA CON IA"):
+        if descrizione:
+            with st.spinner("L'IA sta redigendo il contratto secondo la legge italiana..."):
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    
+                    # PROMPT PROFESSIONALE
+                    prompt = f"""
+                    Agisci come un avvocato esperto in diritto civile italiano. 
+                    Scrivi una bozza di contratto basata su queste istruzioni: {descrizione}.
+                    Usa uno stile {stile}. 
+                    Assicurati di includere:
+                    - Articoli numerati.
+                    - Riferimenti al Codice Civile italiano pertinenti.
+                    - Spazi vuoti [_________] per i dati mancanti.
+                    - Se richiesto (vessatorie={include_vessatorie}), aggiungi in fondo la clausola di doppia firma ex artt. 1341-1342 c.c.
+                    Restituisci solo il testo del contratto.
+                    """
+                    
+                    response = model.generate_content(prompt)
+                    st.session_state.testo_generato = response.text
+                except Exception as e:
+                    st.error(f"Errore IA: {e}")
+        else:
+            st.error("Descrivi almeno brevemente l'accordo prima di generare.")
 
-    testo_legale += "Art. 1 (OGGETTO): L'appaltatore si impegna all'esecuzione delle opere descritte nel capitolato allegato, operando con organizzazione di mezzi propri e gestione a proprio rischio.\n"
-
-    if fideiussione:
-        testo_legale += "\nArt. 2 (FIDEIUSSIONE): A garanzia dell'esatto adempimento di tutte le obbligazioni, l'appaltatore consegna polizza fideiussoria a prima richiesta.\n"
-    
-    if cauzione:
-        testo_legale += "\nArt. 3 (CAUZIONE): Viene costituito un deposito cauzionale a tutela di eventuali vizi o difformità dell'opera.\n"
-
-    if clausole_vessatorie:
-        testo_legale += "\n--- APPROVAZIONE SPECIFICA CLAUSOLE ---\n"
-        testo_legale += "Ai sensi e per gli effetti degli artt. 1341 e 1342 c.c., le parti dichiarano di aver letto e approvato specificamente le clausole relative a: Foro Competente, Limitazioni di Responsabilità, Penali e Facoltà di Recesso.\n"
-        testo_legale += "\nFirma del Committente: ______________________\n"
-
+    # --- EDITOR DI TESTO ---
     st.markdown("---")
-    st.subheader("Anteprima Documento")
-    # Area di testo modificabile dall'utente
-    testo_per_pdf = st.text_area("Bozza Generata (puoi aggiungere dettagli qui):", value=testo_legale, height=400)
+    st.subheader("Editor della Bozza")
+    
+    # Recupera il testo generato o usa uno placeholder
+    testo_iniziale = st.session_state.get('testo_generato', "Il testo generato apparirà qui...")
+    testo_finale = st.text_area("Puoi modificare il testo generato qui:", value=testo_iniziale, height=500)
 
-    # --- 3. GENERAZIONE PDF (CON FIX SPAZIO ORIZZONTALE E LOGO) ---
-    if st.button("🚀 GENERA E SCARICA PDF"):
+    # --- ESPORTAZIONE PDF (Versione Robusta) ---
+    if st.button("🚀 GENERA PDF UFFICIALE"):
         try:
-            # Inizializzazione PDF (A4, millimetri)
-            pdf = FPDF(orientation="P", unit="mm", format="A4")
-            
-            # Impostiamo margini fissi per evitare l'errore "horizontal space"
-            pdf.set_margins(left=20, top=20, right=20)
+            pdf = FPDF()
             pdf.add_page()
-            
-            # --- AGGIUNTA LOGO / INTESTAZIONE ---
-            # Se hai un file "logo.png" nella cartella, puoi usare: pdf.image("logo.png", x=85, y=10, w=40)
-            pdf.set_font("Helvetica", "B", 16)
-            pdf.set_text_color(15, 23, 42) # Colore Blu Notte (come la tua sidebar)
-            pdf.cell(w=0, h=10, txt="ELITE MANAGEMENT SUITE", border=0, ln=True, align='C')
-            
-            pdf.set_font("Helvetica", "I", 10)
-            pdf.set_text_color(150, 150, 150) # Grigio per il payoff
-            pdf.cell(w=0, h=5, txt="Eccellenza nella Gestione Contrattuale", border=0, ln=True, align='C')
-            
-            # Linea di separazione oro (simulata con un rettangolo sottile)
-            pdf.set_fill_color(251, 191, 36) # Colore Oro
-            pdf.rect(x=20, y=40, w=170, h=0.5, style='F')
-            
-            pdf.ln(20) # Spazio dopo l'intestazione
-            
-            # --- CORPO DEL TESTO ---
+            pdf.set_margins(left=20, top=20, right=20)
             pdf.set_font("Helvetica", size=11)
-            pdf.set_text_color(0, 0, 0) # Nero per il testo
             
-            # Calcolo larghezza sicura (210mm - 20mm margine sx - 20mm margine dx = 170mm)
-            larghezza_sicura = 170
+            # Pulizia testo per PDF
+            testo_clean = testo_finale.encode('latin-1', 'replace').decode('latin-1')
             
-            # Pulizia del testo per evitare caratteri non supportati
-            testo_pulito = testo_per_pdf.encode('latin-1', 'replace').decode('latin-1')
+            pdf.multi_cell(w=170, h=7, txt=testo_clean, border=0, align='L')
             
-            # Scrittura con multi_cell (gestisce automaticamente gli a capo)
-            # w=larghezza_sicura risolve l'errore dello spazio orizzontale
-            pdf.multi_cell(w=larghezza_sicura, h=7, txt=testo_pulito, border=0, align='L')
-            
-            # Output finale
             pdf_output = pdf.output()
-            
-            # Pulsante di download Streamlit
             st.download_button(
-                label="📥 Scarica ora il tuo Contratto PDF",
+                label="📥 Scarica PDF",
                 data=bytes(pdf_output),
-                file_name=f"Contratto_Elite_{date.today().strftime('%Y%m%d')}.pdf",
+                file_name=f"Bozza_Contratto_{date.today()}.pdf",
                 mime="application/pdf"
             )
-            st.success("PDF generato con successo!")
-            
+            st.success("Contratto pronto per la firma!")
         except Exception as e:
-            st.error(f"Errore tecnico durante la conversione: {e}")
+            st.error(f"Errore creazione PDF: {e}")
