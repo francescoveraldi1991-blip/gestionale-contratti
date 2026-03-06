@@ -44,7 +44,7 @@ def render_smart_editor():
                 try:
                     # FIX: Usiamo il nome del modello aggiornato
                     # Se 'gemini-1.5-pro' dovesse dare ancora errore, usa 'gemini-1.5-flash'
-                    model = genai.GenerativeModel('gemini-1.5-pro')
+                   model = genai.GenerativeModel('gemini-1.5-flash')
                     
                     prompt = f"""
                     Agisci come un avvocato civilista italiano esperto in contrattualistica.
