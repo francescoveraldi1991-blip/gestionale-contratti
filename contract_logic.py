@@ -42,10 +42,8 @@ def render_smart_editor():
         else:
             with st.spinner("L'IA sta scrivendo il contratto..."):
                 try:
-                    # PROVA 1: Il nome modello più standard e aggiornato
-                    # In alcune versioni vecchie della libreria serve solo 'gemini-pro'
-                    # Nelle nuove serve 'gemini-1.5-flash'
-                    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
+                    # PROVA 1: Nome risorsa completo (evita il 404 della v1beta)
+                    model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
                     
                     prompt = f"""
                     Agisci come un avvocato civilista italiano esperto in contrattualistica.
@@ -55,23 +53,22 @@ def render_smart_editor():
                     Restituisci solo il testo del contratto, senza introduzioni.
                     """
                     
-                    # Generazione del contenuto
                     response = model.generate_content(prompt)
                     
                     if response:
                         st.session_state['ai_contract_draft'] = response.text
                         st.success("Bozza generata con successo!")
                 except Exception as e:
-                    # Se fallisce con 1.5-flash, proviamo automaticamente con il modello base 'gemini-pro'
+                    # PROVA 2: Fallback su nome risorsa completo di Gemini Pro
                     try:
-                        model_alt = genai.GenerativeModel(model_name='gemini-pro')
+                        model_alt = genai.GenerativeModel(model_name='models/gemini-1.0-pro')
                         response_alt = model_alt.generate_content(prompt)
                         st.session_state['ai_contract_draft'] = response_alt.text
-                        st.success("Bozza generata con successo (Modello Compatibility)!")
+                        st.success("Bozza generata con successo (Modello Legacy)!")
                     except Exception as e2:
-                        st.error(f"Errore critico di connessione ai modelli Google: {e2}")
+                        st.error(f"Errore persistente: {e2}. Verifica che la tua API Key sia attiva su Google AI Studio.")
 
-    # --- REVISIONE E PDF (Indentazione corretta a 4 spazi) ---
+    # --- REVISIONE E PDF ---
     st.markdown("---")
     st.subheader("2. Revisione e Modifica")
     testo_per_editor = st.session_state.get('ai_contract_draft', "")
