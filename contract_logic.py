@@ -19,7 +19,7 @@ def render_smart_editor():
 
     st.markdown("---")
 
-    # --- 1. INPUT ---
+    # --- INPUT ---
     st.subheader("1. Definizione dell'Accordo")
     col_input, col_style = st.columns([2, 1])
     
@@ -42,8 +42,10 @@ def render_smart_editor():
         else:
             with st.spinner("L'IA sta scrivendo il contratto..."):
                 try:
-                    # Usiamo il modello 1.5-flash che è il più compatibile universalmente
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    # PROVA 1: Il nome modello più standard e aggiornato
+                    # In alcune versioni vecchie della libreria serve solo 'gemini-pro'
+                    # Nelle nuove serve 'gemini-1.5-flash'
+                    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
                     
                     prompt = f"""
                     Agisci come un avvocato civilista italiano esperto in contrattualistica.
@@ -53,23 +55,28 @@ def render_smart_editor():
                     Restituisci solo il testo del contratto, senza introduzioni.
                     """
                     
+                    # Generazione del contenuto
                     response = model.generate_content(prompt)
                     
-                    if response.text:
+                    if response:
                         st.session_state['ai_contract_draft'] = response.text
                         st.success("Bozza generata con successo!")
-                    else:
-                        st.error("L'IA ha risposto in modo vuoto.")
                 except Exception as e:
-                    st.error(f"Errore durante la generazione: {e}")
+                    # Se fallisce con 1.5-flash, proviamo automaticamente con il modello base 'gemini-pro'
+                    try:
+                        model_alt = genai.GenerativeModel(model_name='gemini-pro')
+                        response_alt = model_alt.generate_content(prompt)
+                        st.session_state['ai_contract_draft'] = response_alt.text
+                        st.success("Bozza generata con successo (Modello Compatibility)!")
+                    except Exception as e2:
+                        st.error(f"Errore critico di connessione ai modelli Google: {e2}")
 
-    # --- 2. REVISIONE ---
+    # --- REVISIONE E PDF (Indentazione corretta a 4 spazi) ---
     st.markdown("---")
     st.subheader("2. Revisione e Modifica")
     testo_per_editor = st.session_state.get('ai_contract_draft', "")
     testo_finale = st.text_area("Revisiona il testo:", value=testo_per_editor, height=450)
 
-    # --- 3. PDF ---
     if st.button("🚀 TRASFORMA IN PDF UFFICIALE"):
         if not testo_finale:
             st.warning("Il testo è vuoto.")
@@ -83,7 +90,6 @@ def render_smart_editor():
                 pdf.ln(10)
                 pdf.set_font("Helvetica", size=10)
                 
-                # Pulizia testo per PDF
                 testo_clean = testo_finale.encode('latin-1', 'replace').decode('latin-1')
                 pdf.multi_cell(w=170, h=6, txt=testo_clean, border=0, align='L')
                 
