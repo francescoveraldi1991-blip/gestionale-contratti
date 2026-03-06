@@ -1,21 +1,18 @@
 import streamlit as st
 from fpdf import FPDF
 from datetime import date
-import google.generativeai as genai
+import requests
+import json
 
 def render_smart_editor():
     st.title("AI Legal Drafter 🤖⚖️")
-    st.markdown("##### Redazione contrattuale intelligente assistita dall'Intelligenza Artificiale.")
+    st.markdown("##### Sistema di Redazione con Chiamata Diretta API (Bypass 404)")
 
     # --- SEZIONE CHIAVE API ---
     with st.expander("🔑 CONFIGURAZIONE AI", expanded=True):
         api_key = st.text_input("Inserisci la tua Gemini API Key:", type="password")
         if api_key:
-            try:
-                genai.configure(api_key=api_key)
-                st.success("IA pronta all'uso!")
-            except Exception as e:
-                st.error(f"Errore configurazione: {e}")
+            st.success("Chiave inserita. Il sistema proverà la connessione diretta.")
 
     st.markdown("---")
 
@@ -24,49 +21,46 @@ def render_smart_editor():
     col_input, col_style = st.columns([2, 1])
     
     with col_input:
-        descrizione = st.text_area(
-            "Cosa deve contenere il contratto?",
-            placeholder="Descrivi l'accordo qui...",
-            height=150
-        )
+        descrizione = st.text_area("Cosa deve contenere il contratto?", height=150)
     
     with col_style:
-        stile = st.radio("Tono legale:", ["Standard / Equilibrato", "Rigido / Protettivo", "Semplificato"])
-        include_vessatorie = st.checkbox("Clausole vessatorie (Art. 1341-1342 CC)", value=True)
+        stile = st.radio("Tono legale:", ["Standard", "Rigido", "Semplice"])
+        include_vessatorie = st.checkbox("Artt. 1341-1342 CC", value=True)
 
     if st.button("🪄 GENERA BOZZA CON INTELLIGENZA ARTIFICIALE"):
         if not api_key:
-            st.error("⚠️ Inserisci la API Key!")
+            st.error("Inserisci la API Key!")
         elif not descrizione:
-            st.error("⚠️ Descrivi l'accordo.")
+            st.error("Descrivi l'accordo.")
         else:
-            with st.spinner("L'IA sta scrivendo il contratto..."):
+            with st.spinner("Connessione diretta ai server Google in corso..."):
                 try:
-                    # PROVA 1: Nome risorsa completo (evita il 404 della v1beta)
-                    model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
+                    # --- CHIAMATA REST DIRETTA (Bypassa la libreria locale) ---
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
                     
-                    prompt = f"""
-                    Agisci come un avvocato civilista italiano esperto in contrattualistica.
-                    Scrivi un contratto formale e legalmente valido basato su: {descrizione}.
-                    Stile: {stile}. Cita gli articoli del Codice Civile italiano pertinenti.
-                    Se richiesto (vessatorie={include_vessatorie}), aggiungi la doppia firma artt. 1341-1342 cc.
-                    Restituisci solo il testo del contratto, senza introduzioni.
-                    """
+                    headers = {'Content-Type': 'application/json'}
                     
-                    response = model.generate_content(prompt)
+                    prompt = f"Agisci come avvocato italiano. Scrivi un contratto formale per: {descrizione}. Stile: {stile}. Se richiesto (vessatorie={include_vessatorie}), aggiungi doppia firma artt. 1341-1342 cc. Restituisci solo il testo."
                     
-                    if response:
-                        st.session_state['ai_contract_draft'] = response.text
-                        st.success("Bozza generata con successo!")
+                    data = {
+                        "contents": [{
+                            "parts": [{"text": prompt}]
+                        }]
+                    }
+
+                    response = requests.post(url, headers=headers, data=json.dumps(data))
+                    result = response.json()
+
+                    # Estrazione del testo dalla risposta JSON di Google
+                    if "candidates" in result:
+                        testo_ia = result["candidates"][0]["content"]["parts"][0]["text"]
+                        st.session_state['ai_contract_draft'] = testo_ia
+                        st.success("Bozza generata con successo tramite REST API!")
+                    else:
+                        st.error(f"Errore risposta Google: {result.get('error', {}).get('message', 'Errore sconosciuto')}")
+                
                 except Exception as e:
-                    # PROVA 2: Fallback su nome risorsa completo di Gemini Pro
-                    try:
-                        model_alt = genai.GenerativeModel(model_name='models/gemini-1.0-pro')
-                        response_alt = model_alt.generate_content(prompt)
-                        st.session_state['ai_contract_draft'] = response_alt.text
-                        st.success("Bozza generata con successo (Modello Legacy)!")
-                    except Exception as e2:
-                        st.error(f"Errore persistente: {e2}. Verifica che la tua API Key sia attiva su Google AI Studio.")
+                    st.error(f"Errore di connessione: {e}")
 
     # --- REVISIONE E PDF ---
     st.markdown("---")
@@ -87,15 +81,11 @@ def render_smart_editor():
                 pdf.ln(10)
                 pdf.set_font("Helvetica", size=10)
                 
+                # Pulizia testo
                 testo_clean = testo_finale.encode('latin-1', 'replace').decode('latin-1')
                 pdf.multi_cell(w=170, h=6, txt=testo_clean, border=0, align='L')
                 
                 pdf_output = pdf.output()
-                st.download_button(
-                    label="📥 SCARICA PDF",
-                    data=bytes(pdf_output),
-                    file_name=f"Contratto_Elite_{date.today().strftime('%Y%m%d')}.pdf",
-                    mime="application/pdf"
-                )
+                st.download_button(label="📥 SCARICA PDF", data=bytes(pdf_output), file_name=f"Contratto_Elite_{date.today()}.pdf", mime="application/pdf")
             except Exception as e:
                 st.error(f"Errore PDF: {e}")
