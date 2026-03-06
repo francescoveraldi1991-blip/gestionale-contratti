@@ -19,7 +19,7 @@ def render_smart_editor():
 
     st.markdown("---")
 
-    # --- INPUT ---
+    # --- 1. INPUT ---
     st.subheader("1. Definizione dell'Accordo")
     col_input, col_style = st.columns([2, 1])
     
@@ -42,9 +42,8 @@ def render_smart_editor():
         else:
             with st.spinner("L'IA sta scrivendo il contratto..."):
                 try:
-                    # FIX: Usiamo il nome del modello aggiornato
-                    # Se 'gemini-1.5-pro' dovesse dare ancora errore, usa 'gemini-1.5-flash'
-                   model = genai.GenerativeModel('gemini-1.5-flash')
+                    # Usiamo il modello 1.5-flash che è il più compatibile universalmente
+                    model = genai.GenerativeModel('gemini-1.5-flash')
                     
                     prompt = f"""
                     Agisci come un avvocato civilista italiano esperto in contrattualistica.
@@ -56,23 +55,21 @@ def render_smart_editor():
                     
                     response = model.generate_content(prompt)
                     
-                    # Verifica se la risposta contiene testo (gestione blocchi sicurezza)
                     if response.text:
                         st.session_state['ai_contract_draft'] = response.text
                         st.success("Bozza generata con successo!")
                     else:
-                        st.error("L'IA ha risposto in modo vuoto. Prova a cambiare i dettagli.")
-                
+                        st.error("L'IA ha risposto in modo vuoto.")
                 except Exception as e:
-                    # Se l'errore persiste, mostriamo il messaggio tecnico per il debug
                     st.error(f"Errore durante la generazione: {e}")
 
-    # --- AREA DI REVISIONE E PDF (Invariata) ---
+    # --- 2. REVISIONE ---
     st.markdown("---")
     st.subheader("2. Revisione e Modifica")
     testo_per_editor = st.session_state.get('ai_contract_draft', "")
     testo_finale = st.text_area("Revisiona il testo:", value=testo_per_editor, height=450)
 
+    # --- 3. PDF ---
     if st.button("🚀 TRASFORMA IN PDF UFFICIALE"):
         if not testo_finale:
             st.warning("Il testo è vuoto.")
@@ -85,6 +82,8 @@ def render_smart_editor():
                 pdf.cell(w=0, h=10, txt="ELITE LEGAL MANAGEMENT SUITE", border=0, ln=True, align='C')
                 pdf.ln(10)
                 pdf.set_font("Helvetica", size=10)
+                
+                # Pulizia testo per PDF
                 testo_clean = testo_finale.encode('latin-1', 'replace').decode('latin-1')
                 pdf.multi_cell(w=170, h=6, txt=testo_clean, border=0, align='L')
                 
