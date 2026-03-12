@@ -5,87 +5,100 @@ import requests
 import json
 
 def render_smart_editor():
-    # Forza lo svuotamento della cache se cambi versione (opzionale)
-    # st.cache_data.clear() 
+    st.title("AI Legal Drafter (Powered by Groq) 🤖⚖️")
+    st.markdown("##### Redazione professionale con modelli Llama 3")
 
-    st.title("AI Legal Drafter 🤖⚖️")
-    
-    with st.expander("🔑 CONFIGURAZIONE AI", expanded=True):
-        api_key = st.text_input("Inserisci la tua Gemini API Key:", type="password")
+    # --- SEZIONE CHIAVE API ---
+    with st.expander("🔑 CONFIGURAZIONE GROQ", expanded=True):
+        api_key = st.text_input("Inserisci la tua Groq API Key (gsk-...):", type="password")
         if api_key:
-            st.success("Chiave configurata.")
+            st.success("Chiave Groq configurata correttamente!")
+        else:
+            st.info("ℹ️ Ottieni la chiave gratis su console.groq.com")
 
     st.markdown("---")
 
+    # --- 1. INPUT ---
     st.subheader("1. Dettagli del Contratto")
-    descrizione = st.text_area("Cosa deve contenere il contratto?", height=150)
+    descrizione = st.text_area("Descrivi l'accordo (es. parti, oggetto, compenso):", height=150)
     
     col1, col2 = st.columns(2)
     with col1:
-        stile = st.radio("Tono:", ["Standard", "Rigido", "Semplice"])
+        stile = st.radio("Tono legale:", ["Standard", "Protettivo", "Semplice"])
     with col2:
-        include_vessatorie = st.checkbox("Artt. 1341-1342 CC", value=True)
+        include_vessatorie = st.checkbox("Clausole vessatorie (1341-1342 CC)", value=True)
 
-    if st.button("🪄 GENERA BOZZA"):
+    # --- LOGICA DI GENERAZIONE ---
+    if st.button("🪄 GENERA CONTRATTO ORA"):
         if not api_key:
-            st.error("Inserisci la API Key!")
+            st.error("⚠️ Inserisci la API Key di Groq!")
         elif not descrizione:
-            st.error("Descrivi l'accordo.")
+            st.error("⚠️ Inserisci una descrizione.")
         else:
-            with st.spinner("Generazione in corso (Endpoint V1)..."):
+            with st.spinner("L'IA sta elaborando la struttura legale..."):
                 try:
-                    # PROVA L'ENDPOINT V1 CON IL MODELLO GEMINI-1.5-FLASH
-                    # Ho rimosso ogni riferimento a 'beta'
-                    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5:generateContent?key={api_key}"
+                    url = "https://api.groq.com/openai/v1/chat/completions"
                     
-                    headers = {'Content-Type': 'application/json'}
+                    headers = {
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json"
+                    }
                     
-                    prompt_text = f"Scrivi un contratto legale formale in italiano per: {descrizione}. Stile: {stile}. Se richiesto (vessatorie={include_vessatorie}), aggiungi doppia firma artt. 1341-1342 cc."
+                    prompt = f"""
+                    Sei un avvocato civilista italiano. Scrivi un contratto formale basato su: {descrizione}.
+                    REGOLE:
+                    - Usa lo stile {stile}.
+                    - Includi riferimenti normativi (Codice Civile).
+                    - Usa [_________] per i dati mancanti.
+                    - Se richiesto (vessatorie={include_vessatorie}), aggiungi la sezione per la doppia firma ex artt. 1341-1342 c.c.
+                    - Lingua: Italiano professionale.
+                    Restituisci solo il testo del contratto.
+                    """
                     
                     payload = {
-                        "contents": [{
-                            "parts": [{"text": prompt_text}]
-                        }],
-                        "generationConfig": {
-                            "temperature": 0.7,
-                            "topK": 40,
-                            "topP": 0.95,
-                            "maxOutputTokens": 2048,
-                        }
+                        "model": "llama-3.3-70b-versatile",
+                        "messages": [
+                            {"role": "system", "content": "Sei un esperto legale specializzato in diritto civile italiano."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        "temperature": 0.5 # Più bassa per essere più precisi e meno 'creativi'
                     }
 
                     response = requests.post(url, headers=headers, json=payload)
                     result = response.json()
 
                     if response.status_code == 200:
-                        testo_ia = result['candidates'][0]['content']['parts'][0]['text']
+                        testo_ia = result['choices'][0]['message']['content']
                         st.session_state['ai_contract_draft'] = testo_ia
-                        st.success("Bozza generata!")
+                        st.success("Contratto generato!")
                     else:
-                        # Se Google risponde ancora con 404, proviamo il modello "gemini-pro" (versione 1.0)
-                        st.info("Tentativo con modello alternativo...")
-                        url_alt = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
-                        response_alt = requests.post(url_alt, headers=headers, json=payload)
-                        result_alt = response_alt.json()
-                        
-                        if response_alt.status_code == 200:
-                            st.session_state['ai_contract_draft'] = result_alt['candidates'][0]['content']['parts'][0]['text']
-                            st.success("Bozza generata con successo!")
-                        else:
-                            st.error(f"Errore persistente: {result_alt.get('error', {}).get('message', 'Modello non trovato')}")
+                        st.error(f"Errore: {result.get('error', {}).get('message', 'Errore Groq')}")
                 
                 except Exception as e:
-                    st.error(f"Errore tecnico: {e}")
+                    st.error(f"Errore di connessione: {e}")
 
-    # --- EDITOR E PDF (Invariati) ---
+    # --- 2. EDITOR E PDF ---
     st.markdown("---")
-    st.subheader("2. Revisione")
-    testo_finale = st.text_area("Revisiona qui:", value=st.session_state.get('ai_contract_draft', ""), height=400)
+    st.subheader("2. Revisione e Stampa")
+    testo_finale = st.text_area("Testo del contratto:", value=st.session_state.get('ai_contract_draft', ""), height=450)
 
-    if st.button("🚀 SCARICA PDF"):
-        if testo_finale:
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Helvetica", size=10)
-            pdf.multi_cell(0, 6, testo_finale.encode('latin-1', 'replace').decode('latin-1'))
-            st.download_button("📥 Download", data=bytes(pdf.output()), file_name="contratto.pdf")
+    if st.button("🚀 GENERA PDF"):
+        if not testo_finale:
+            st.warning("Genera prima il testo.")
+        else:
+            try:
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_margins(20, 20, 20)
+                pdf.set_font("Helvetica", "B", 14)
+                pdf.cell(0, 10, "DOCUMENTO LEGALE - ELITE MANAGEMENT", ln=True, align='C')
+                pdf.ln(10)
+                pdf.set_font("Helvetica", size=10)
+                
+                # Gestione caratteri speciali
+                testo_clean = testo_finale.encode('latin-1', 'replace').decode('latin-1')
+                pdf.multi_cell(0, 6, testo_clean)
+                
+                st.download_button("📥 Scarica Contratto", data=bytes(pdf.output()), file_name="contratto_generato.pdf")
+            except Exception as e:
+                st.error(f"Errore PDF: {e}")
