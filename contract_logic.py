@@ -36,7 +36,7 @@ def render_smart_editor():
                 try:
                     # PROVA L'ENDPOINT V1 CON IL MODELLO GEMINI-1.5-FLASH
                     # Ho rimosso ogni riferimento a 'beta'
-                    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5:generateContent?key={api_key}"
                     
                     headers = {'Content-Type': 'application/json'}
                     
